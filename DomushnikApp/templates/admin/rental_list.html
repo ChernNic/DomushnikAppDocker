@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static django_tables2 %}
+
+{% block title %}Аренда{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Список аренды</h2>
+    <form method="post" enctype="multipart/form-data" action="{% url 'import_model_data' model_name='Rental' %}" id="import-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="file" class="form-label">Выберите JSON-файл для импорта:</label>
+            <input type="file" name="file" id="file" class="form-control" accept=".json" required>
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-outline-secondary my-3">
+                <i class="fas fa-upload me-1"></i> Импортировать
+            </button>
+                <!-- Кнопка экспорта -->
+            <a href="{% url 'export_model_data' model_name='Rental' %}" class="btn btn-outline-primary my-3">
+                <i class="fas fa-download me-1"></i> Экспортировать
+            </a>
+        </div>
+    </form>
+    <form method="get">
+        {{ filter.form.as_p }}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button type="submit" class="btn btn-outline-primary">Применить фильтры</button>
+            <a href="{% url 'rental_add' %}" class="btn btn-primary btn">
+                <i class="fas fa-plus me-1"></i> Добавить
+            </a>
+        </div>
+    </form>
+
+    {% render_table table %}
+    <div class="pagination-wrapper">
+        <nav aria-label="Page navigation">
+            {% if table.paginator.num_pages > 1 %}
+                <ul class="pagination">
+                    {% for page_num in table.page_range %}
+                        <li class="page-item {% if page_num == table.page.number %}active{% endif %}">
+                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </nav>
+    </div>    
+</div>
+{% endblock %}
+

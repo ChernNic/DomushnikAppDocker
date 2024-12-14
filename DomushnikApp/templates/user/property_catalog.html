@@ -1,0 +1,143 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="container mt-5">
+        <form method="get" class="mb-4">
+            <div class="row align-items-center">
+                <!-- Address Search -->
+                <div class="col-md-6 mb-3">
+                    <label for="address" class="form-label">Поиск</label>   
+                    <div class="input-group">
+                        <input type="text" name="address" class="form-control" placeholder="Введите улицу, город или область" value="{{ filter.form.address.value|default_if_none:'' }}">
+                        <button type="submit" class="btn btn-primary">Поиск</button>
+                    </div>
+                </div>
+                <!-- Price Range Inputs -->
+                <div class="col-md-3 mb-3">
+                    <label for="price-range" class="form-label">Цена (₽)</label>
+                    <div class="input-group">
+                        <input type="number" name="price_per_month_min" class="form-control" placeholder="Мин." value="{{ filter.form.price_per_month_min.value|default:'' }}">
+                        <span class="input-group-text">—</span>
+                        <input type="number" name="price_per_month_max" class="form-control" placeholder="Макс." value="{{ filter.form.price_per_month_max.value|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"> </label>
+                    <div class="input-group">
+                        <a href="{% url 'catalog_list' %}" class="btn btn-outline-primary">Собросить</a>
+                    </div>
+                </div>
+            </div>
+        </form>        
+        <div class="container mt-5 mb-5">
+            <h4>Рекомендуем посмотреть</h4>
+            <div class="row">
+                {% for amenity in amenity_counts %}
+                {% if amenity.property_count > 0 %}
+                <div class="col-md-4 mb-2 d-flex align-items-baseline">
+                    <a href="?amenities={{ amenity.id }}" class="text-danger text-decoration-none">{{ amenity.name }}</a>
+                    <span class="flex-grow-1 mx-2 border-bottom border-dashed"></span>
+                    <span class="text-muted">{{ amenity.property_count }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+        
+                {% for type in property_type_counts %}
+                {% if type.property_count > 0 %}
+                <div class="col-md-4 mb-2 d-flex align-items-baseline">
+                    <a href="?type={{ type.id }}" class="text-danger text-decoration-none">{{ type.name }}</a>
+                    <span class="flex-grow-1 mx-2 border-bottom border-dashed"></span>
+                    <span class="text-muted">{{ type.property_count }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+        
+                {% for usage in property_usage_counts %}
+                {% if usage.property_count > 0 %}
+                <div class="col-md-4 mb-2 d-flex align-items-baseline">
+                    <a href="?property_usage={{ usage.property_usage }}" class="text-danger text-decoration-none">{{ usage.property_usage }}</a>
+                    <span class="flex-grow-1 mx-2 border-bottom border-dashed"></span>
+                    <span class="text-muted">{{ usage.property_count }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row justify-content-center align-items-center">
+            {% for property in properties %}
+                <div class="row mb-4">
+                    <!-- Первая колонка: Галерея изображений -->
+                    <div class="col-12 col-md-4 mb-3">
+                        <div id="propertyGallery{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for photo in property.photos.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ photo.photo.url }}" class="d-block w-100" alt="Property Image">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#propertyGallery{{ property.id }}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#propertyGallery{{ property.id }}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+    
+                    <!-- Вторая колонка: Информация о недвижимости -->
+                    <div class="col-12 col-md-6 mb-3">
+                        <h4><strong>{{ property.property_name }}</strong></h4>
+                        <p class="text-muted">{{ property.address }}</p>
+                        <p><strong>{{ property.number_of_rooms }}-комн. квартира, {{ property.area }} м², {{ property.floor }}/{{ property.total_floors }} этаж</strong></p>
+                        <p>
+                            {% for amenity in property.amenities.all %}
+                                <span class="badge bg-primary">{{ amenity.name }}</span>{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        <h4 class="text-danger" style="font-size: 1.5rem;">{{ property.price_per_month }} ₽</h4>
+                        <p>{{ property.description }}</p>
+                    </div>
+    
+                    <!-- Третья колонка: Информация о владельце -->
+                    <div class="col-12 col-md-2 mb-3">
+                        <h5>Арендодатель</h5>
+                        <div class="d-flex align-items-center mb-3">
+                            {% if property.landlord.landlord_profile.is_legal_entity %}
+                                <!-- If the landlord is a legal entity, show company info -->
+                                {% if property.landlord.landlord_profile.company_logo %}
+                                    <img src="{{ property.landlord.landlord_profile.company_logo.url }}" class="rounded-circle me-3" width="50" alt="Company Logo">
+                                {% endif %}
+                                <div>
+                                    <p><strong>{{ property.landlord.landlord_profile.company_name }}</strong></p>
+                                    <a href="{% url 'catalog_list' %}?landlord={{ property.landlord.id }}" class="mt-4 text-black-50"></a>
+                                </div>
+                            {% else %}
+                                <!-- If the landlord is an individual, show user info -->
+                                {% if property.landlord.profile.avatar %}
+                                    <img src="{{ property.landlord.profile.avatar.url }}" class="rounded-circle me-3" width="50" alt="User Avatar">
+                                {% endif %}
+                                <div>
+                                    <p><strong>{{ property.landlord.profile.first_name }} {{ property.landlord.profile.last_name }}</strong></p>
+                                    <p>{{ property.landlord.profile.phone_number }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <p>Рейтинг: <strong>{{ property.landlord.landlord_profile.rating }} / 5</strong></p>
+    
+                        <!-- Кнопка арендовать -->
+                        <a href="{% url 'rent_property' property.pk %}" class="btn btn-primary w-100 mt-3">Арендовать</a>
+                        <a href="{% url 'catalog_list' %}?landlord={{ property.landlord.id }}" class="mt-4 text-black-50">Посмотреть все</a>
+
+                        <a href="{% url 'property_detail' property.pk %}" class="btn btn-outline-primary w-100 mt-3">Подробнее</a>
+                    </div>
+                    <hr class="mt-4">
+                </div>
+            {% endfor %}
+        </div>
+    
+    </div>
+</div>
+{% endblock %}

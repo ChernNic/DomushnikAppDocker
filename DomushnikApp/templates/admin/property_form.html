@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ view.object|default:"Добавить недвижимость" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ view.object|default:"Добавить недвижимость" }}</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <h3>Фотографии</h3>
+        {{ photo_formset.management_form }}
+        <div id="photo-formset">
+            {% for form in photo_formset %}
+                <div class="formset-row photo-form">
+                    {% if form.instance.pk %}
+                        {% if form.instance.photo %}
+                            <img src="{{ form.instance.photo.url }}" alt="Фото" style="max-width: 200px;">
+                        {% endif %}
+                        <label for="{{ form.prefix }}-DELETE">Удалить:</label>
+                        {{ form.DELETE }}
+                    {% endif %}
+                    {{ form.as_p }}
+                </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-secondary add-formset" data-formset-prefix="photo">Добавить фото</button>
+
+        <h3>Характеристики</h3>
+        {{ feature_formset.management_form }}
+        <div id="feature-formset">
+            {% for form in feature_formset %}
+                <div class="formset-row feature-form">
+                    {% if form.instance.pk %}
+                        <label for="{{ form.prefix }}-DELETE">Удалить:</label>
+                        {{ form.DELETE }}
+                    {% endif %}
+                    {{ form.as_p }}
+                </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-secondary add-formset" data-formset-prefix="feature">Добавить характеристику</button>
+
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <a href="{% url 'property_list' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $('.add-formset').click(function() {
+        let prefix = $(this).data('formset-prefix');
+        let totalForms = parseInt($(`#id_${prefix}-TOTAL_FORMS`).val());
+        let emptyForm = $(`.${prefix}-form-empty`).clone(true).removeClass(`${prefix}-form-empty`).addClass(`${prefix}-form`);
+        emptyForm.find(':input').each(function() {
+            let name = $(this).attr('name').replace('__prefix__', totalForms);
+            let id = $(this).attr('id').replace('__prefix__', totalForms);
+            $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+        });
+        emptyForm.show();
+        $(`#${prefix}-formset`).append(emptyForm);
+        $(`#id_${prefix}-TOTAL_FORMS`).val(totalForms + 1);
+    });
+
+    $(document).ready(function() {
+        // Clone empty forms for use when adding new forms
+        {% for prefix in prefixes %}
+            let {{ prefix }}EmptyForm = $(`.{{ prefix }}-form`).first().clone(true).addClass('{{ prefix }}-form-empty').removeClass('{{ prefix }}-form');
+            {{ prefix }}EmptyForm.find(':input').each(function() {
+                $(this).val('').removeAttr('checked');
+            });
+            {{ prefix }}EmptyForm.hide();
+            $('form').append({{ prefix }}EmptyForm);
+        {% endfor %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Удалить арендодателя{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Вы уверены, что хотите удалить арендодателя {{ object.user.first_name }} {{ object.user.last_name }}?</h2>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Удалить</button>
+        <a href="{% url 'landlord_list' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base_user.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-3 text-danger">Мои аренды</h1>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Адрес</th>
+                <th scope="col">Статус</th>
+                <th scope="col">Цена</th>
+                <th scope="col">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in rentals %}
+                <tr>
+                    <td>{{ rental.property.address }}</td>
+                    <td>
+                        <span class="badge {% if rental.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if rental.is_active %}Активна{% else %}Не активна{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ rental.property.price_per_month }} руб./мес.</td>
+                    <td>
+                        {% if not rental.is_active %}
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#payModal{{ rental.id }}">
+                                Оплатить
+                            </button>
+                        {% else %}
+                            <span class="text-muted">Оплачено</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Модальное окно оплаты -->
+                <div class="modal fade" id="payModal{{ rental.id }}" tabindex="-1" aria-labelledby="payModalLabel{{ rental.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="payModalLabel{{ rental.id }}">Оплата аренды</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="rental_id" value="{{ rental.id }}">
+                                <div class="modal-body">
+                                    <p><strong>Адрес:</strong> {{ rental.property.address }}</p>
+                                    <p><strong>Цена:</strong> {{ rental.property.price_per_month }} руб./мес.</p>
+                                    <div class="mb-3">
+                                        <label for="cardNumber" class="form-label">Номер карты</label>
+                                        <input type="text" class="form-control" id="cardNumber" placeholder="0000 0000 0000 0000" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cardExpiry" class="form-label">Срок действия</label>
+                                        <input type="text" class="form-control" id="cardExpiry" placeholder="MM/YY" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cardCVV" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cardCVV" placeholder="123" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                    <button type="submit" class="btn btn-primary">Оплатить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

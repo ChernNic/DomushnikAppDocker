@@ -1,0 +1,55 @@
+{% extends 'authbase.html' %}
+
+{% block title %}Авторизация{% endblock %}
+
+{% block content %}
+<form method="post" style="width: 23rem;" class="mt-5">
+    {% csrf_token %}
+    <h3 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Авторизация</h3>
+    {% for field in form %}
+      <div class="form-outline mb-4">
+        {{ field.label_tag }}
+        {% if field.name == 'password' %}
+          <div class="input-group">
+            {{ field }}
+            <button type="button" class="btn btn-secondary toggle-password" style="background: #f7f7f9" data-input-id="{{ field.id_for_label }}">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        {% else %}
+          {{ field }}
+        {% endif %}
+        {% if field.errors %}
+          <div class="text-danger small">{{ field.errors|striptags }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+            {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+    <button class="btn btn-primary btn-block" type="submit">Войти</button>
+    <p class="small mb-5 pb-lg-2"><a class="text-muted" href="{% url 'password_reset' %}">Забыли пароль?</a></p>
+    <p>Нет аккаунта? <a href="{% url 'register' %}" class="link-info">Регистрация</a></p>
+</form>
+
+<script>
+  // Скрипт для переключения видимости пароля
+  document.querySelectorAll('.toggle-password').forEach(button => {
+    button.addEventListener('click', function () {
+      const inputId = this.getAttribute('data-input-id');
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        this.innerHTML = '<i class="fas fa-eye"></i>';
+      }
+    });
+  });
+</script>
+{% endblock %}

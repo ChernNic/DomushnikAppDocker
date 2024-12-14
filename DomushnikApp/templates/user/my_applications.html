@@ -1,0 +1,55 @@
+{% extends 'base_user.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-3 text-danger">Мои заявки</h1>
+
+    <!-- Фильтры -->
+    <form method="get" class="mb-4">
+        <div class="btn-group" role="group" aria-label="Фильтрация заявок">
+            <a href="{% url 'my_applications' %}" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">
+                Все
+            </a>
+            {% for key, label in APPLICATION_STATUS_CHOICES %}
+                <a href="?status={{ key }}" class="btn btn-outline-secondary {% if status_filter == key %}active{% endif %}">
+                    {{ label }}
+                </a>
+            {% endfor %}
+        </div>
+    </form>
+
+    <!-- Список заявок -->
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Название недвижимости</th>
+                <th scope="col">Адрес</th>
+                <th scope="col">Цена</th>
+                <th scope="col">Статус</th>
+                <th scope="col">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for application in applications %}
+                <tr>
+                    <td>{{ application.property.property_name }}</td>
+                    <td>{{ application.property.address }}</td>
+                    <td>{{ application.property.price_per_month }} руб./мес.</td>
+                    <td>
+                        <span class="badge {% if application.status == 'pending' %}bg-secondary{% elif application.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ application.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'property_detail' application.property.id %}" class="btn btn-primary btn-sm">Подробнее</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Заявок пока нет.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

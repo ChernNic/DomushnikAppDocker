@@ -1,0 +1,36 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<div class="container my-4">
+    <h1>Подать заявку на аренду</h1>
+    <p>Вы собираетесь арендовать: <strong>{{ property.property_name }}</strong></p>
+    <p>Цена: {{ property.price_per_month }} ₽/мес.</p>
+    <p>Адрес: {{ property.address.city }}, {{ property.address.street }}, {{ property.address.house }}</p>
+
+    <!-- Если заявка уже отправлена -->
+    {% if application_exists %}
+        <div class="alert alert-info" role="alert">
+            Вы уже отправили заявку на эту собственность. Мы свяжемся с вами в ближайшее время.
+        </div>
+    <!-- Если заявка только что отправлена -->
+    {% elif application_sent %}
+        <div class="alert alert-success" role="alert">
+            Ваша заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.
+        </div>
+    <!-- Если заявка не отправлена -->
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Отправить заявку</button>
+        </form>
+    {% endif %}
+</div>
+<script>
+    {% if messages %}
+        {% for message in messages %}
+            toastr.success("{{ message }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
+{% endblock %}

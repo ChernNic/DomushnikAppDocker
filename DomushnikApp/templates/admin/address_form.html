@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}{{ view.object|default:"Добавить адрес" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ view.object|default:"Добавить адрес" }}</h2>
+    <div class="row">
+        <!-- Левая колонка с формой -->
+        <div class="col-md-4">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">Сохранить</button>
+                <a href="{% url 'address_list' %}" class="btn btn-secondary">Отмена</a>
+            </form>
+        </div>
+        <!-- Правая колонка с картой -->
+        <div class="col-md-8">
+            <div id="map" style="height: 100%; width: 100%; min-height: 400px;"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+<script>
+    // Получаем координаты из формы, если они уже есть, или задаём значения по умолчанию
+    var latitude = parseFloat(document.getElementById('id_latitude')?.value) || 55.7558;
+    var longitude = parseFloat(document.getElementById('id_longitude')?.value) || 37.6173;
+
+    // Инициализируем карту
+    var map = L.map('map').setView([latitude, longitude], 10); 
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Добавляем маркер
+    var marker = L.marker([latitude, longitude], { draggable: true }).addTo(map);
+
+    // Обновляем координаты в форме при перетаскивании маркера
+    marker.on('dragend', function (e) {
+        var latlng = marker.getLatLng();
+        document.getElementById('id_latitude').value = latlng.lat.toFixed(6);
+        document.getElementById('id_longitude').value = latlng.lng.toFixed(6);
+        getAddress(latlng.lat, latlng.lng); // Получаем адрес
+    });
+
+    // Обновляем координаты в форме при клике на карте
+    map.on('click', function (e) {
+        var latlng = e.latlng;
+        marker.setLatLng(latlng);
+        document.getElementById('id_latitude').value = latlng.lat.toFixed(6);
+        document.getElementById('id_longitude').value = latlng.lng.toFixed(6);
+        getAddress(latlng.lat, latlng.lng); // Получаем адрес
+    });
+
+    // Функция для получения адреса с помощью Яндекс Геокодера
+    function getAddress(lat, lng) {
+        var apiKey = 'ff7d7894-876d-4d74-9c50-609076c5a089'; // Ваш API-ключ
+        var url = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&format=json&geocode=${lng},${lat}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.response.GeoObjectCollection.featureMember.length > 0) {
+                    var geoObject = data.response.GeoObjectCollection.featureMember[0].GeoObject;
+                    var components = geoObject.metaDataProperty.GeocoderMetaData.Address.Components;
+
+                    // Ищем нужные части адреса
+                    var country = components.find(c => c.kind === 'country')?.name || '';
+                    var province = components.find(c => c.kind === 'province')?.name || '';
+                    var city = components.find(c => c.kind === 'locality')?.name || '';
+                    var street = components.find(c => c.kind === 'street')?.name || '';
+                    var house = components.find(c => c.kind === 'house')?.name || '';
+                    var zip_code = geoObject.metaDataProperty.GeocoderMetaData.Address.postal_code || '';
+
+                    // Заполняем форму
+                    document.getElementById('id_country').value = country;
+                    document.getElementById('id_state').value = province; // Область (province)
+                    document.getElementById('id_city').value = city; // Город
+                    document.getElementById('id_street').value = street; // Улица
+                    document.getElementById('id_house').value = house; // Номер дома
+                    document.getElementById('id_zip_code').value = zip_code; // Почтовый индекс
+                } else {
+                    console.error('Адрес не найден');
+                    alert('Не удалось получить адрес, попробуйте позже.');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка получения адреса:', error);
+                alert('Произошла ошибка при запросе адреса.');
+            });
+    }
+</script>
+{% endblock %}

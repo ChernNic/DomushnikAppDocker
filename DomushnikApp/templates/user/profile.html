@@ -1,0 +1,155 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-3 text-danger">Ваш профиль</h1>
+    
+    <!-- Сообщения об успехе или ошибках -->
+    {% if messages %}
+        <div class="mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-2 text-center">
+            <h3>Аватар</h3>
+            {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="Avatar" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+            {% else %}
+                <div class="rounded-circle bg-light d-flex justify-content-center align-items-center mb-3" style="width: 150px; height: 150px;">
+                    <p class="text-muted">Нет аватара</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-10">
+            <h3>Информация о пользователе</h3>
+            <ul class="list-group">
+                <li class="list-group-item"><strong>Имя:</strong> {{ profile.first_name }}</li>
+                <li class="list-group-item"><strong>Фамилия:</strong> {{ profile.last_name }}</li>
+                <li class="list-group-item"><strong>Email:</strong> {{ profile.user.email }}</li>
+                <li class="list-group-item"><strong>Номер телефона:</strong> {{ profile.phone_number }}</li>
+                <li class="list-group-item"><strong>О себе:</strong> <br>{{ profile.bio|default:"Не указано" }}</li>
+            </ul>
+            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                <i class="fa-solid fa-pen-to-square"></i> Редактировать
+            </button>
+            <div class="mt-4">
+                <div class="btn-group btn-group" role="group">
+                    {% if is_landlord %}
+                        <a class="btn btn-outline-primary" href="{% url 'my_property' %}">Моя собственность</a>
+                        <a class="btn btn-outline-primary" href="{% url 'property_applications' %}">Заявки на собственность</a>
+                    {% endif %}
+                    <a class="btn btn-outline-primary" href="{% url 'my_rentals' %}">Мои аренды</a>
+                    <a class="btn btn-outline-primary" href="{% url 'my_applications' %}">Мои заявки</a>
+                </div>
+            </div>
+
+            {% if is_landlord %}
+                <div class="mt-4">
+                    <h3>Информация арендодателя</h3>
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>Рейтинг:</strong> {{ landlord_profile.rating }}</li>
+                        <li class="list-group-item"><strong>Юридическое лицо:</strong> {{ landlord_profile.is_legal_entity|yesno:"Да,Нет" }}</li>
+                        {% if landlord_profile.is_legal_entity %}
+                            <li class="list-group-item"><strong>Название компании:</strong> {{ landlord_profile.company_name }}</li>
+                            {% if landlord_profile.company_logo %}
+                                <li class="list-group-item">
+                                    <img src="{{ landlord_profile.company_logo.url }}" alt="Лого компании" style="width: 100px; height: auto;">
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if not is_landlord %}
+                <div class="mt-4 text-center">
+                    <h3>Хотите стать арендодателем?</h3>
+                    <button class="btn btn-success pulse mt-3" data-bs-toggle="modal" data-bs-target="#becomeLandlordModal">
+                        Стать арендодателем
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования профиля -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Редактирование профиля</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" name="update_profile">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.phone_number.label_tag }}
+                        {{ form.phone_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="avatar">Аватар</label>
+                        {{ form.avatar }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.bio.label_tag }}
+                        {{ form.bio }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="submit" class="btn btn-primary" name="update_profile">Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно становления арендодателем -->
+<div class="modal fade" id="becomeLandlordModal" tabindex="-1" aria-labelledby="becomeLandlordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="becomeLandlordModalLabel">Станьте арендодателем</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" name="become_landlord">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ landlord_form.is_legal_entity.label_tag }}
+                        {{ landlord_form.is_legal_entity }}
+                    </div>
+                    <div class="mb-3">
+                        {{ landlord_form.company_name.label_tag }}
+                        {{ landlord_form.company_name }}
+                    </div>
+                    <div class="mb-3">
+                        {{ landlord_form.company_logo.label_tag }}
+                        {{ landlord_form.company_logo }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="submit" class="btn btn-primary" name="become_landlord">Подтвердить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

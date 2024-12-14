@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% load django_tables2 %} <!-- Загружаем теги django-tables2 -->
+
+{% block title %}Адреса{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Список адресов</h2>
+
+    <!-- Форма для импорта -->
+    <form method="post" enctype="multipart/form-data" action="{% url 'import_model_data' model_name='Address' %}" id="import-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="file" class="form-label">Выберите JSON-файл для импорта:</label>
+            <input type="file" name="file" id="file" class="form-control" accept=".json" required>
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-outline-secondary my-3">
+                <i class="fas fa-upload me-1"></i> Импортировать
+            </button>
+                <!-- Кнопка экспорта -->
+            <a href="{% url 'export_model_data' model_name='Address' %}" class="btn btn-outline-primary my-3">
+                <i class="fas fa-download me-1"></i> Экспортировать
+            </a>
+        </div>
+    </form>
+
+    <!-- Фильтры -->
+    <form method="get">
+        {{ filter.form.as_p }}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button type="submit" class="btn btn-outline-primary">Применить фильтры</button>
+            <a href="{% url 'address_add' %}" class="btn btn-primary btn">
+                <i class="fas fa-plus me-1"></i> Добавить
+            </a>
+        </div>
+    </form>
+
+    <!-- Таблица -->
+    {% render_table table %}
+    
+    <!-- Пагинация -->
+    <div class="pagination-wrapper">
+        <nav aria-label="Page navigation">
+            {% if table.paginator.num_pages > 1 %}
+                <ul class="pagination">
+                    {% for page_num in table.page_range %}
+                        <li class="page-item {% if page_num == table.page.number %}active{% endif %}">
+                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </nav>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div id="toast-container"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('import-form');
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            // Отправка данных через fetch
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
+                }
+            });
+
+            const toastContainer = document.getElementById('toast-container');
+
+            if (response.ok) {
+                const data = await response.json();
+                showToast('success', data.message || 'Импорт завершен успешно!');
+            } else {
+                const error = await response.json();
+                showToast('danger', error.message || 'Произошла ошибка при импорте.');
+            }
+        });
+
+        // Функция для показа уведомлений
+        function showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0 mb-2`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Автоматическое скрытие через 5 секунд
+            const bootstrapToast = new bootstrap.Toast(toast, { delay: 5000 });
+            bootstrapToast.show();
+
+            // Удаление из DOM после скрытия
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+    });
+</script>
+{% endblock %}

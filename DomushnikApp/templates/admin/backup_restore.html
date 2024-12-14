@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Восстановить резервную копию{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Восстановление резервной копии</h2>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Восстановить</button>
+        <a href="{% url 'backup_list' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

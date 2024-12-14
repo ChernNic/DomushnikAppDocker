@@ -1,0 +1,56 @@
+{% extends 'base_user.html' %}
+
+{% block content %}
+{% if is_landlord %}
+<div class="container my-4">
+    <h1 class="mb-3 text-danger">Заявки на вашу недвижимость</h1>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Название недвижимости</th>
+                <th scope="col">Отправитель</th>
+                <th scope="col">Дата подачи</th>
+                <th scope="col">Статус</th>
+                <th scope="col">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for application in applications %}
+                <tr>
+                    <td>{{ application.property.property_name }}</td>
+                    <td>{{ application.tenant.username }}</td>
+                    <td>{{ application.application_date }}</td>
+                    <td>
+                        <span class="badge {% if application.status == 'pending' %}bg-secondary{% elif application.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ application.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="application_id" value="{{ application.id }}">
+                            <select name="status" class="form-select form-select-sm d-inline w-auto">
+                                <option value="pending" {% if application.status == 'pending' %}selected{% endif %}>В ожидании</option>
+                                <option value="approved" {% if application.status == 'approved' %}selected{% endif %}>Одобрено</option>
+                                <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Отклонено</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Обновить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Заявок пока нет.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="container mt-5 text-center">
+    <a class="btn btn-outline-danger" href="{% url 'profile' %}">Хотите стать арендодателем?</a>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+name: Syntax Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Шаг 1. Клонирование репозитория
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Шаг 2. Установка Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      # Шаг 3. Проверка синтаксиса с помощью py_compile
+      - name: Syntax Check
+        run: |
+          python -m compileall DomushnikApp DomushnikProject main.py manage.py

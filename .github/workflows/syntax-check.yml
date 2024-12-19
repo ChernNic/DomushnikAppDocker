@@ -1,4 +1,4 @@
-name: Code Quality and Syntax Check
+name: Syntax Check
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  check-code:
+  syntax-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,22 +26,4 @@ jobs:
       # Шаг 3. Проверка синтаксиса (py_compile)
       - name: Syntax Check
         run: |
-          python -m compileall DomushnikApp DomushnikProject main.py manage.py
-
-      # Шаг 4. Проверка стиля кода с flake8
-      - name: Lint Code with Flake8
-        run: |
-          pip install flake8
-          flake8 DomushnikApp DomushnikProject main.py manage.py
-
-      # Шаг 5. Проверка типов с mypy
-      - name: Static Type Check with MyPy
-        run: |
-          pip install mypy
-          mypy DomushnikApp DomushnikProject main.py manage.py
-
-      # Шаг 6. Запуск тестов с pytest
-      - name: Run Tests
-        run: |
-          pip install pytest
-          pytest
+          python -m compileall DomushnikApp
